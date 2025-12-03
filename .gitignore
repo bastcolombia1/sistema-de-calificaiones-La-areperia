@@ -1,0 +1,14 @@
+# Windows
+nul
+Thumbs.db
+desktop.ini
+
+# Node
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store

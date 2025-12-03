@@ -1,0 +1,669 @@
+/* ========================================
+   Sistema de Calificaciones de Servicio
+   Estilos CSS
+   ======================================== */
+
+:root {
+    --color-primary: #FF6B35;
+    --color-primary-dark: #E55A2B;
+    --color-success: #28a745;
+    --color-error: #dc3545;
+    --color-warning: #ffc107;
+    --color-text: #333333;
+    --color-text-light: #666666;
+    --color-background: #f7e123;
+    --color-white: #ffffff;
+    --color-border: #dddddd;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
+    --border-radius: 12px;
+    --transition: all 0.3s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--color-background);
+    color: var(--color-text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    width: 100%;
+    max-width: 480px;
+    min-height: 100vh;
+    background: var(--color-white);
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+@media (min-width: 481px) {
+    .container {
+        min-height: auto;
+        border-radius: var(--border-radius);
+        margin: 20px;
+    }
+}
+
+/* ========================================
+   Screens
+   ======================================== */
+
+.screen {
+    display: none;
+    flex-direction: column;
+    padding: 30px 24px;
+    min-height: 100vh;
+}
+
+@media (min-width: 481px) {
+    .screen {
+        min-height: 600px;
+    }
+}
+
+.screen.active {
+    display: flex;
+}
+
+/* ========================================
+   Header
+   ======================================== */
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.logo {
+    max-width: 120px;
+    max-height: 80px;
+    margin-bottom: 16px;
+    object-fit: contain;
+}
+
+.logo.hidden {
+    display: none;
+}
+
+header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: 4px;
+}
+
+.store-name {
+    font-size: 1rem;
+    color: var(--color-text-light);
+}
+
+/* ========================================
+   Main Content
+   ======================================== */
+
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+main h2 {
+    font-size: 1.4rem;
+    text-align: center;
+    margin-bottom: 12px;
+    color: var(--color-text);
+}
+
+.instruction {
+    text-align: center;
+    color: var(--color-text-light);
+    margin-bottom: 32px;
+    font-size: 1rem;
+}
+
+/* ========================================
+   Input Group
+   ======================================== */
+
+.input-group {
+    margin-bottom: 24px;
+}
+
+.input-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--color-text);
+}
+
+.input-group input,
+.input-group textarea {
+    width: 100%;
+    padding: 16px;
+    font-size: 1.1rem;
+    border: 2px solid var(--color-border);
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    outline: none;
+}
+
+.input-group input:focus,
+.input-group textarea:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
+}
+
+.input-group input.error {
+    border-color: var(--color-error);
+}
+
+.error-text {
+    display: block;
+    color: var(--color-error);
+    font-size: 0.875rem;
+    margin-top: 6px;
+}
+
+.error-text.hidden {
+    display: none;
+}
+
+/* Input con prefijo */
+.input-with-prefix {
+    display: flex;
+    align-items: stretch;
+    border: 2px solid var(--color-border);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.input-with-prefix:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
+}
+
+.invoice-prefix {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background: var(--color-background);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-text);
+    border-right: 2px solid var(--color-border);
+}
+
+.input-with-prefix input {
+    flex: 1;
+    border: none;
+    border-radius: 0;
+    padding: 16px;
+    font-size: 1.1rem;
+}
+
+.input-with-prefix input:focus {
+    border: none;
+    box-shadow: none;
+}
+
+/* ========================================
+   Buttons
+   ======================================== */
+
+.btn-primary,
+.btn-secondary {
+    padding: 16px 32px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-primary {
+    background: var(--color-primary);
+    color: var(--color-white);
+    width: 100%;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary:disabled {
+    background: var(--color-border);
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--color-text-light);
+    border: 2px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+    border-color: var(--color-text-light);
+    color: var(--color-text);
+}
+
+.button-group {
+    display: flex;
+    gap: 12px;
+    margin-top: auto;
+    padding-top: 24px;
+}
+
+.button-group .btn-secondary {
+    flex: 0 0 auto;
+}
+
+.button-group .btn-primary {
+    flex: 1;
+}
+
+/* ========================================
+   Rating Options
+   ======================================== */
+
+.invoice-display {
+    text-align: center;
+    color: var(--color-text-light);
+    margin-bottom: 32px;
+    font-size: 0.95rem;
+}
+
+.invoice-display strong {
+    color: var(--color-text);
+}
+
+.rating-options {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.rating-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 24px;
+    background: var(--color-white);
+    border: 3px solid var(--color-border);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+    min-width: 100px;
+}
+
+.rating-btn:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+.rating-btn.selected {
+    border-color: var(--color-primary);
+    background: rgba(255, 107, 53, 0.1);
+    transform: scale(1.05);
+}
+
+.rating-btn .emoji {
+    font-size: 3rem;
+    margin-bottom: 8px;
+    line-height: 1;
+}
+
+.rating-btn .rating-img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    margin-bottom: 8px;
+    transition: var(--transition);
+}
+
+.rating-btn:hover .rating-img {
+    transform: scale(1.1);
+}
+
+.rating-btn.selected .rating-img {
+    transform: scale(1.15);
+}
+
+.rating-btn .label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+/* ========================================
+   Comment Section
+   ======================================== */
+
+.comment-section {
+    margin-bottom: 24px;
+}
+
+.comment-section label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--color-text);
+}
+
+.comment-section textarea {
+    width: 100%;
+    padding: 16px;
+    font-size: 1rem;
+    border: 2px solid var(--color-border);
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    outline: none;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.comment-section textarea:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
+}
+
+.char-count {
+    display: block;
+    text-align: right;
+    font-size: 0.8rem;
+    color: var(--color-text-light);
+    margin-top: 4px;
+}
+
+/* ========================================
+   Loading & Status Screens
+   ======================================== */
+
+#loading-screen,
+#submitting-screen {
+    align-items: center;
+    justify-content: center;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ========================================
+   Error Screen
+   ======================================== */
+
+#error-screen {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.error-icon {
+    font-size: 4rem;
+    margin-bottom: 16px;
+}
+
+#error-screen h2 {
+    color: var(--color-error);
+    margin-bottom: 12px;
+}
+
+#error-screen p {
+    color: var(--color-text-light);
+}
+
+/* ========================================
+   Thanks Screen
+   ======================================== */
+
+#thanks-screen {
+    align-items: center;
+    justify-content: center;
+}
+
+.thanks-content {
+    text-align: center;
+}
+
+.success-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--color-success);
+    color: var(--color-white);
+    font-size: 3rem;
+    font-weight: bold;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    animation: scaleIn 0.5s ease;
+}
+
+@keyframes scaleIn {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.thanks-content h2 {
+    color: var(--color-success);
+    margin-bottom: 12px;
+}
+
+.thanks-content p {
+    color: var(--color-text-light);
+    margin-bottom: 8px;
+}
+
+.countdown {
+    font-size: 0.9rem;
+    margin-top: 24px;
+}
+
+/* ========================================
+   QR Section
+   ======================================== */
+
+.qr-section {
+    margin: 24px 0;
+    padding: 20px;
+    background: var(--color-background);
+    border-radius: var(--border-radius);
+}
+
+.qr-text {
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 16px;
+}
+
+.qr-code {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+    margin-bottom: 12px;
+}
+
+.qr-instruction {
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+}
+
+/* ========================================
+   Setup/Admin Screen
+   ======================================== */
+
+#setup-screen {
+    align-items: center;
+    justify-content: center;
+}
+
+.setup-content {
+    text-align: center;
+    width: 100%;
+    max-width: 320px;
+}
+
+.setup-content h2 {
+    color: var(--color-primary);
+    margin-bottom: 24px;
+}
+
+.setup-content p {
+    color: var(--color-text);
+    margin-bottom: 16px;
+}
+
+.setup-content .input-group {
+    margin-bottom: 20px;
+}
+
+.setup-content input,
+.setup-content select {
+    width: 100%;
+    padding: 16px;
+    font-size: 1.1rem;
+    border: 2px solid var(--color-border);
+    border-radius: var(--border-radius);
+    text-align: center;
+    transition: var(--transition);
+}
+
+.setup-content input:focus,
+.setup-content select:focus {
+    border-color: var(--color-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
+}
+
+.setup-content select {
+    text-align: left;
+    cursor: pointer;
+    background: var(--color-white);
+}
+
+.setup-hint {
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+    margin-top: 16px;
+}
+
+#pin-section,
+#sede-section {
+    transition: var(--transition);
+}
+
+/* ========================================
+   Footer
+   ======================================== */
+
+.app-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px 16px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.9);
+    border-top: 1px solid var(--color-border);
+    font-size: 0.60rem;
+    color: var(--color-text-light);
+}
+
+.app-footer p {
+    margin: 2px 0;
+}
+
+.app-footer a {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.app-footer a:hover {
+    text-decoration: underline;
+}
+
+/* ========================================
+   Utilities
+   ======================================== */
+
+.hidden {
+    display: none !important;
+}
+
+/* ========================================
+   Responsive Adjustments
+   ======================================== */
+
+@media (max-width: 360px) {
+    .rating-options {
+        gap: 8px;
+    }
+
+    .rating-btn {
+        padding: 16px;
+        min-width: 80px;
+    }
+
+    .rating-btn .emoji {
+        font-size: 2.5rem;
+    }
+
+    header h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* ========================================
+   Touch Device Optimizations
+   ======================================== */
+
+@media (hover: none) {
+    .btn-primary:hover:not(:disabled),
+    .rating-btn:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .rating-btn.selected {
+        transform: none;
+    }
+}
