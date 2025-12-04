@@ -67,7 +67,8 @@
         pinError: document.getElementById('pin-error'),
         btnVerifyPin: document.getElementById('btn-verify-pin'),
         sedeSelect: document.getElementById('sede-select'),
-        btnSaveSede: document.getElementById('btn-save-sede')
+        btnSaveSede: document.getElementById('btn-save-sede'),
+        btnFullscreen: document.getElementById('btn-fullscreen')
     };
 
     // ========================================
@@ -576,6 +577,31 @@
         }, 2000);
     }
 
+    function toggleFullscreen() {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            // Entrar en pantalla completa
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) { // Safari/iOS
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { // IE11
+                elem.msRequestFullscreen();
+            }
+            elements.btnFullscreen.textContent = 'Salir Pantalla Completa';
+        } else {
+            // Salir de pantalla completa
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+            elements.btnFullscreen.textContent = 'Pantalla Completa';
+        }
+    }
+
     // ========================================
     // Inicialización
     // ========================================
@@ -615,6 +641,9 @@
         // Tocar logo 5 veces para abrir configuración
         elements.logo.addEventListener('click', handleLogoTap);
         elements.logoRating.addEventListener('click', handleLogoTap);
+
+        // Botón pantalla completa
+        elements.btnFullscreen.addEventListener('click', toggleFullscreen);
     }
 
     async function init() {

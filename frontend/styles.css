@@ -587,6 +587,11 @@ main h2 {
     margin-top: 16px;
 }
 
+.btn-fullscreen {
+    width: 100%;
+    margin-top: 12px;
+}
+
 #pin-section,
 #sede-section {
     transition: var(--transition);
