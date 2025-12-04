@@ -223,6 +223,30 @@
         }
     }
 
+    async function checkInvoiceDuplicate(numeroFactura) {
+        const url = `${CONFIG.API_URL}?action=checkInvoice&numero_factura=${encodeURIComponent(numeroFactura)}`;
+        log('Checking invoice duplicate:', url);
+
+        try {
+            const response = await fetch(url, {
+                method: 'GET',
+                redirect: 'follow'
+            });
+            const data = await response.json();
+            return data;
+        } catch (fetchError) {
+            log('Fetch failed, trying JSONP:', fetchError);
+
+            try {
+                const data = await fetchWithCallback(url);
+                return data;
+            } catch (jsonpError) {
+                // Si falla la verificación, permitir continuar
+                return { success: true, exists: false };
+            }
+        }
+    }
+
     async function submitRating(ratingData) {
         log('Submitting rating:', ratingData);
 
@@ -389,11 +413,12 @@
     function handleInvoiceInput(e) {
         const value = e.target.value.toUpperCase();
         state.invoiceNumber = value;
+        elements.invoiceError.textContent = 'Por favor ingresa el número de factura';
         elements.invoiceError.classList.add('hidden');
         elements.invoiceInput.classList.remove('error');
     }
 
-    function handleContinue() {
+    async function handleContinue() {
         if (!state.invoiceNumber.trim()) {
             elements.invoiceError.classList.remove('hidden');
             elements.invoiceInput.classList.add('error');
@@ -401,9 +426,49 @@
             return;
         }
 
-        // Mostrar factura con prefijo si existe
+        // Construir número de factura completo con prefijo
         const prefix = state.config.prefijo_factura || '';
         const fullInvoice = prefix + state.invoiceNumber;
+
+        // Verificar duplicados según configuración
+        const validarDuplicados = state.config.validar_duplicados || 'NO';
+
+        if (validarDuplicados !== 'NO') {
+            elements.btnContinue.disabled = true;
+            elements.btnContinue.textContent = 'Verificando...';
+
+            try {
+                const checkResult = await checkInvoiceDuplicate(fullInvoice);
+
+                if (checkResult.success && checkResult.exists) {
+                    if (validarDuplicados === 'BLOQUEAR') {
+                        // Bloquear - no permitir continuar
+                        elements.invoiceError.textContent = 'Esta factura ya fue calificada anteriormente';
+                        elements.invoiceError.classList.remove('hidden');
+                        elements.invoiceInput.classList.add('error');
+                        elements.btnContinue.disabled = false;
+                        elements.btnContinue.textContent = 'Continuar';
+                        return;
+                    } else if (validarDuplicados === 'ADVERTIR') {
+                        // Advertir - preguntar al usuario
+                        const continuar = confirm('Esta factura ya fue calificada anteriormente. ¿Desea enviar otra calificación?');
+                        if (!continuar) {
+                            elements.btnContinue.disabled = false;
+                            elements.btnContinue.textContent = 'Continuar';
+                            return;
+                        }
+                    }
+                }
+            } catch (error) {
+                log('Error checking duplicate:', error);
+                // Si hay error, permitir continuar
+            }
+
+            elements.btnContinue.disabled = false;
+            elements.btnContinue.textContent = 'Continuar';
+        }
+
+        // Mostrar factura y continuar
         elements.displayInvoice.textContent = fullInvoice;
         showScreen('rating-screen');
     }

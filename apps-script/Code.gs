@@ -33,6 +33,9 @@ function doGet(e) {
       case 'getStats':
         result = getStats(e.parameter.codigo_pv);
         break;
+      case 'checkInvoice':
+        result = checkDuplicateInvoice(e.parameter.numero_factura);
+        break;
       case 'saveRating':
         // Permitir guardar via GET para evitar problemas CORS
         result = saveRating({
@@ -101,6 +104,7 @@ function getConfig(codigoPv) {
   const idxColorPrimario = headers.indexOf('color_primario');
   const idxColorSecundario = headers.indexOf('color_secundario');
   const idxPrefijoFactura = headers.indexOf('prefijo_factura');
+  const idxValidarDuplicados = headers.indexOf('validar_duplicados');
   const idxActivo = headers.indexOf('activo');
 
   // Buscar el punto de venta
@@ -125,7 +129,8 @@ function getConfig(codigoPv) {
             logo_url: logoUrl,
             color_primario: data[i][idxColorPrimario] || '#FF6B35',
             color_secundario: idxColorSecundario >= 0 ? (data[i][idxColorSecundario] || '#f7e123') : '#f7e123',
-            prefijo_factura: idxPrefijoFactura >= 0 ? (data[i][idxPrefijoFactura] || '') : ''
+            prefijo_factura: idxPrefijoFactura >= 0 ? (data[i][idxPrefijoFactura] || '') : '',
+            validar_duplicados: idxValidarDuplicados >= 0 ? (data[i][idxValidarDuplicados] === true || data[i][idxValidarDuplicados] === 'TRUE' || data[i][idxValidarDuplicados] === 'BLOQUEAR' ? 'BLOQUEAR' : (data[i][idxValidarDuplicados] === 'ADVERTIR' ? 'ADVERTIR' : 'NO')) : 'NO'
           }
         };
       } else {
@@ -166,6 +171,39 @@ function getSedes() {
   }
 
   return { success: true, sedes: sedes };
+}
+
+/**
+ * Verifica si una factura ya fue calificada
+ * @param {string} numeroFactura - Número de factura completo (con prefijo)
+ * @returns {Object} Resultado indicando si existe duplicado
+ */
+function checkDuplicateInvoice(numeroFactura) {
+  if (!numeroFactura) {
+    return { success: false, error: 'Número de factura requerido' };
+  }
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(SHEET_RATINGS);
+  const data = sheet.getDataRange().getValues();
+
+  // La columna de número de factura es la 4 (índice 3)
+  const facturaUpperCase = numeroFactura.toUpperCase().trim();
+
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][3]).toUpperCase().trim() === facturaUpperCase) {
+      return {
+        success: true,
+        exists: true,
+        message: 'Esta factura ya fue calificada anteriormente'
+      };
+    }
+  }
+
+  return {
+    success: true,
+    exists: false
+  };
 }
 
 /**
