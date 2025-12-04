@@ -577,20 +577,24 @@
         }, 2000);
     }
 
+    function enterFullscreen() {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+        }
+    }
+
     function toggleFullscreen() {
         if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-            // Entrar en pantalla completa
-            const elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen();
-            } else if (elem.webkitRequestFullscreen) { // Safari/iOS
-                elem.webkitRequestFullscreen();
-            } else if (elem.msRequestFullscreen) { // IE11
-                elem.msRequestFullscreen();
-            }
+            enterFullscreen();
             elements.btnFullscreen.textContent = 'Salir Pantalla Completa';
+            // Guardar preferencia de pantalla completa
+            localStorage.setItem('fullscreen_mode', 'true');
         } else {
-            // Salir de pantalla completa
             if (document.exitFullscreen) {
                 document.exitFullscreen();
             } else if (document.webkitExitFullscreen) {
@@ -599,6 +603,17 @@
                 document.msExitFullscreen();
             }
             elements.btnFullscreen.textContent = 'Pantalla Completa';
+            localStorage.setItem('fullscreen_mode', 'false');
+        }
+    }
+
+    // Re-entrar a pantalla completa cuando el usuario toca la pantalla
+    function handleUserInteraction() {
+        const wantsFullscreen = localStorage.getItem('fullscreen_mode') === 'true';
+        const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+
+        if (wantsFullscreen && !isFullscreen) {
+            enterFullscreen();
         }
     }
 
@@ -644,6 +659,10 @@
 
         // Botón pantalla completa
         elements.btnFullscreen.addEventListener('click', toggleFullscreen);
+
+        // Re-activar pantalla completa cuando el usuario interactúa
+        document.addEventListener('click', handleUserInteraction);
+        document.addEventListener('touchstart', handleUserInteraction);
     }
 
     async function init() {
