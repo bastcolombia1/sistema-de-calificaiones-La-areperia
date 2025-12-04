@@ -14,7 +14,9 @@
         codigoPv: null,
         invoiceNumber: '',
         selectedRating: null,
-        comment: ''
+        comment: '',
+        logoTapCount: 0,
+        logoTapTimer: null
     };
 
     // ========================================
@@ -476,7 +478,7 @@
     }
 
     // ========================================
-    // Tecla secreta para acceder a configuración
+    // Accesos secretos para configuración
     // ========================================
     function handleKeyboardShortcut(e) {
         // Ctrl + Shift + S para abrir configuración
@@ -484,6 +486,29 @@
             e.preventDefault();
             showSetupScreen();
         }
+    }
+
+    function handleLogoTap() {
+        // Incrementar contador de toques
+        state.logoTapCount++;
+        log('Logo tap count:', state.logoTapCount);
+
+        // Reiniciar timer
+        if (state.logoTapTimer) {
+            clearTimeout(state.logoTapTimer);
+        }
+
+        // Si llega a 5 toques, abrir configuración
+        if (state.logoTapCount >= 5) {
+            state.logoTapCount = 0;
+            showSetupScreen();
+            return;
+        }
+
+        // Resetear contador después de 2 segundos de inactividad
+        state.logoTapTimer = setTimeout(() => {
+            state.logoTapCount = 0;
+        }, 2000);
     }
 
     // ========================================
@@ -521,6 +546,10 @@
 
         // Tecla secreta (Ctrl+Shift+S)
         document.addEventListener('keydown', handleKeyboardShortcut);
+
+        // Tocar logo 5 veces para abrir configuración
+        elements.logo.addEventListener('click', handleLogoTap);
+        elements.logoRating.addEventListener('click', handleLogoTap);
     }
 
     async function init() {
