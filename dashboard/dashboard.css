@@ -252,12 +252,20 @@ body::before {
 /* ========================================
    Yesterday Section
    ======================================== */
+.today-section,
 .yesterday-section {
     margin-bottom: 24px;
     padding: 20px 24px;
     background: var(--dash-card-bg);
     border-radius: var(--dash-radius);
     box-shadow: var(--dash-shadow);
+}
+
+.today-section {
+    border-left: 4px solid var(--dash-success);
+}
+
+.yesterday-section {
     border-left: 4px solid #007bff;
 }
 

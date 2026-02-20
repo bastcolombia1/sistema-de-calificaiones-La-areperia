@@ -73,6 +73,19 @@
         yBarMalo: document.getElementById('y-bar-malo'),
         yesterdaySedes: document.getElementById('yesterday-sedes'),
 
+        // Today
+        todaySection: document.getElementById('today-section'),
+        todayDate: document.getElementById('today-date'),
+        tTotal: document.getElementById('t-total'),
+        tBueno: document.getElementById('t-bueno'),
+        tRegular: document.getElementById('t-regular'),
+        tMalo: document.getElementById('t-malo'),
+        tAverage: document.getElementById('t-average'),
+        tBarBueno: document.getElementById('t-bar-bueno'),
+        tBarRegular: document.getElementById('t-bar-regular'),
+        tBarMalo: document.getElementById('t-bar-malo'),
+        todaySedes: document.getElementById('today-sedes'),
+
         // Hourly
         chartHourly: document.getElementById('chart-hourly'),
         hourlyAlerts: document.getElementById('hourly-alerts')
@@ -818,6 +831,63 @@
     }
 
     // ========================================
+    // Today Section
+    // ========================================
+    function renderToday() {
+        var today = new Date();
+        var tYear = today.getFullYear();
+        var tMonth = today.getMonth();
+        var tDay = today.getDate();
+
+        var dayNames = ['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
+        var monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        el.todayDate.textContent = dayNames[today.getDay()] + ' ' +
+            tDay + ' ' + monthNames[tMonth] + ' ' + tYear;
+
+        var todayRatings = state.rawRatings.filter(function(r) {
+            var d = new Date(r.timestamp);
+            return d.getFullYear() === tYear && d.getMonth() === tMonth && d.getDate() === tDay;
+        });
+
+        var summary = computeSummary(todayRatings);
+
+        el.tTotal.textContent = summary.total;
+        el.tBueno.textContent = summary.bueno;
+        el.tRegular.textContent = summary.regular;
+        el.tMalo.textContent = summary.malo;
+        el.tAverage.textContent = summary.total > 0 ? summary.average.toFixed(2) : '-';
+
+        if (summary.total > 0) {
+            el.tBarBueno.style.width = (summary.bueno / summary.total * 100) + '%';
+            el.tBarRegular.style.width = (summary.regular / summary.total * 100) + '%';
+            el.tBarMalo.style.width = (summary.malo / summary.total * 100) + '%';
+        } else {
+            el.tBarBueno.style.width = '0%';
+            el.tBarRegular.style.width = '0%';
+            el.tBarMalo.style.width = '0%';
+        }
+
+        if (todayRatings.length === 0) {
+            el.todaySedes.innerHTML = '<p class="yesterday-empty">No hay calificaciones hoy</p>';
+            return;
+        }
+
+        var sedeStats = computeSedeStats(todayRatings, state.rawSedes);
+        var sedesWithData = sedeStats.filter(function(s) { return s.total > 0; });
+
+        el.todaySedes.innerHTML = sedesWithData.map(function(s) {
+            var avgClass = s.average >= 2.5 ? 'good' : (s.average >= 1.5 ? 'mid' : 'bad');
+            return '<span class="yesterday-sede-chip">' +
+                escapeHtml(s.nombre_pv) +
+                ' <span class="yesterday-sede-chip__count">' + s.total + '</span>' +
+                ' <span class="yesterday-sede-chip__avg yesterday-sede-chip__avg--' + avgClass + '">' +
+                    s.average.toFixed(1) +
+                '</span>' +
+            '</span>';
+        }).join('');
+    }
+
+    // ========================================
     // Yesterday Section
     // ========================================
     function renderYesterday() {
@@ -929,6 +999,7 @@
     // ========================================
     function renderAll() {
         renderSummaryCards();
+        renderToday();
         renderYesterday();
         renderDistributionChart();
         renderSedesChart();

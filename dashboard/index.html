@@ -86,6 +86,45 @@
                 </div>
             </section>
 
+            <!-- Resumen de Hoy -->
+            <section class="today-section" id="today-section">
+                <div class="yesterday-header">
+                    <h3 class="yesterday-header__title">Resumen de Hoy</h3>
+                    <span class="yesterday-header__date" id="today-date"></span>
+                </div>
+                <div class="yesterday-cards">
+                    <div class="yesterday-card">
+                        <p class="yesterday-card__value" id="t-total">0</p>
+                        <p class="yesterday-card__label">Calificaciones</p>
+                    </div>
+                    <div class="yesterday-card yesterday-card--success">
+                        <p class="yesterday-card__value" id="t-bueno">0</p>
+                        <p class="yesterday-card__label">Bueno</p>
+                    </div>
+                    <div class="yesterday-card yesterday-card--warning">
+                        <p class="yesterday-card__value" id="t-regular">0</p>
+                        <p class="yesterday-card__label">Regular</p>
+                    </div>
+                    <div class="yesterday-card yesterday-card--danger">
+                        <p class="yesterday-card__value" id="t-malo">0</p>
+                        <p class="yesterday-card__label">Malo</p>
+                    </div>
+                    <div class="yesterday-card">
+                        <p class="yesterday-card__value" id="t-average">-</p>
+                        <p class="yesterday-card__label">Promedio</p>
+                    </div>
+                    <div class="yesterday-card">
+                        <div class="yesterday-bar" id="t-bar">
+                            <div class="yesterday-bar__segment yesterday-bar__segment--bueno" id="t-bar-bueno"></div>
+                            <div class="yesterday-bar__segment yesterday-bar__segment--regular" id="t-bar-regular"></div>
+                            <div class="yesterday-bar__segment yesterday-bar__segment--malo" id="t-bar-malo"></div>
+                        </div>
+                        <p class="yesterday-card__label">Distribucion</p>
+                    </div>
+                </div>
+                <div class="yesterday-sedes" id="today-sedes"></div>
+            </section>
+
             <!-- Resumen de Ayer -->
             <section class="yesterday-section" id="yesterday-section">
                 <div class="yesterday-header">
