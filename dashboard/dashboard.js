@@ -21,7 +21,8 @@
         charts: {
             distribution: null,
             sedes: null,
-            trend: null
+            trend: null,
+            hourly: null
         }
     };
 
@@ -70,7 +71,11 @@
         yBarBueno: document.getElementById('y-bar-bueno'),
         yBarRegular: document.getElementById('y-bar-regular'),
         yBarMalo: document.getElementById('y-bar-malo'),
-        yesterdaySedes: document.getElementById('yesterday-sedes')
+        yesterdaySedes: document.getElementById('yesterday-sedes'),
+
+        // Hourly
+        chartHourly: document.getElementById('chart-hourly'),
+        hourlyAlerts: document.getElementById('hourly-alerts')
     };
 
     // ========================================
@@ -232,6 +237,83 @@
         });
 
         return result;
+    }
+
+    function computeHourlyStats(ratings) {
+        var hours = [];
+        for (var h = 0; h < 24; h++) {
+            hours.push({ hour: h, total: 0, sum: 0, bueno: 0, regular: 0, malo: 0 });
+        }
+
+        for (var i = 0; i < ratings.length; i++) {
+            var r = ratings[i];
+            var date = new Date(r.timestamp);
+            var hour = date.getHours();
+            var slot = hours[hour];
+            slot.total++;
+            slot.sum += r.calificacion;
+            if (r.calificacion === 3) slot.bueno++;
+            else if (r.calificacion === 2) slot.regular++;
+            else if (r.calificacion === 1) slot.malo++;
+        }
+
+        return hours.map(function(s) {
+            return {
+                hour: s.hour,
+                total: s.total,
+                bueno: s.bueno,
+                regular: s.regular,
+                malo: s.malo,
+                average: s.total > 0 ? s.sum / s.total : 0
+            };
+        });
+    }
+
+    function formatHourLabel(hour) {
+        if (hour === 0) return '12am';
+        if (hour < 12) return hour + 'am';
+        if (hour === 12) return '12pm';
+        return (hour - 12) + 'pm';
+    }
+
+    function detectHourlyPatterns(hourlyStats) {
+        var MIN_RATINGS = 3;
+        var LOW_THRESHOLD = 1.5;
+        var alerts = [];
+
+        for (var i = 0; i < hourlyStats.length; i++) {
+            var s = hourlyStats[i];
+            if (s.total >= MIN_RATINGS && s.average > 0 && s.average <= LOW_THRESHOLD) {
+                alerts.push({
+                    fromHour: s.hour,
+                    toHour: (s.hour + 1) % 24,
+                    average: s.average,
+                    total: s.total
+                });
+            }
+        }
+
+        // Consolidar horas consecutivas
+        if (alerts.length > 1) {
+            var merged = [alerts[0]];
+            for (var j = 1; j < alerts.length; j++) {
+                var prev = merged[merged.length - 1];
+                if (alerts[j].fromHour === prev.toHour) {
+                    prev.toHour = alerts[j].toHour;
+                    prev.average = (prev.average * prev.total + alerts[j].average * alerts[j].total)
+                                   / (prev.total + alerts[j].total);
+                    prev.total += alerts[j].total;
+                } else {
+                    merged.push(alerts[j]);
+                }
+            }
+            alerts = merged;
+        }
+
+        return alerts.map(function(a) {
+            a.label = formatHourLabel(a.fromHour) + ' a ' + formatHourLabel(a.toHour);
+            return a;
+        });
     }
 
     function getFilteredComments(ratings, sedeFilter) {
@@ -493,6 +575,115 @@
         });
     }
 
+    function renderHourlyChart() {
+        var hourlyStats = computeHourlyStats(state.filteredRatings);
+
+        if (state.charts.hourly) {
+            state.charts.hourly.destroy();
+        }
+
+        if (typeof Chart === 'undefined') return;
+
+        var barColors = hourlyStats.map(function(s) {
+            if (s.total === 0) return 'rgba(200, 200, 200, 0.3)';
+            if (s.average >= 2.5) return 'rgba(40, 167, 69, 0.8)';
+            if (s.average >= 1.5) return 'rgba(255, 193, 7, 0.8)';
+            return 'rgba(220, 53, 69, 0.8)';
+        });
+
+        var borderColors = hourlyStats.map(function(s) {
+            if (s.total === 0) return 'rgba(200, 200, 200, 0.5)';
+            if (s.average >= 2.5) return '#28a745';
+            if (s.average >= 1.5) return '#ffc107';
+            return '#dc3545';
+        });
+
+        var labels = hourlyStats.map(function(s) {
+            return formatHourLabel(s.hour);
+        });
+
+        state.charts.hourly = new Chart(el.chartHourly, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Promedio',
+                    data: hourlyStats.map(function(s) {
+                        return s.total > 0 ? parseFloat(s.average.toFixed(2)) : null;
+                    }),
+                    backgroundColor: barColors,
+                    borderColor: borderColors,
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 3,
+                        title: { display: true, text: 'Promedio' },
+                        ticks: {
+                            stepSize: 0.5,
+                            callback: function(value) {
+                                if (value === 1) return '1 (Malo)';
+                                if (value === 2) return '2 (Regular)';
+                                if (value === 3) return '3 (Bueno)';
+                                return value;
+                            }
+                        }
+                    },
+                    x: {
+                        title: { display: true, text: 'Hora del dia' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var idx = context.dataIndex;
+                                var s = hourlyStats[idx];
+                                if (s.total === 0) return 'Sin datos';
+                                return 'Promedio: ' + s.average.toFixed(2) +
+                                       ' (' + s.total + ' cal: ' +
+                                       s.bueno + ' bueno, ' + s.regular + ' regular, ' +
+                                       s.malo + ' malo)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        renderHourlyAlerts(hourlyStats);
+    }
+
+    function renderHourlyAlerts(hourlyStats) {
+        var patterns = detectHourlyPatterns(hourlyStats);
+
+        if (patterns.length === 0) {
+            el.hourlyAlerts.innerHTML = '';
+            el.hourlyAlerts.classList.add('hidden');
+            return;
+        }
+
+        el.hourlyAlerts.classList.remove('hidden');
+
+        el.hourlyAlerts.innerHTML = patterns.map(function(p) {
+            return '<div class="hourly-alert">' +
+                '<span class="hourly-alert__icon">&#9888;</span>' +
+                '<span class="hourly-alert__text">' +
+                    'Entre las <strong>' + p.label + '</strong> las calificaciones tienden a ser bajas ' +
+                    '(promedio: <strong>' + p.average.toFixed(1) + '</strong>, ' +
+                    p.total + ' calificaciones)' +
+                '</span>' +
+            '</div>';
+        }).join('');
+    }
+
     function renderSedesTable() {
         var sedeStats = computeSedeStats(state.filteredRatings, state.rawSedes);
 
@@ -723,6 +914,7 @@
         renderDistributionChart();
         renderSedesChart();
         renderTrendChart();
+        renderHourlyChart();
         renderSedesTable();
         state.commentPage = 1;
         renderCommentsTable();
