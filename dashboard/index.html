@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Sistema de Calificaciones</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+
+        <!-- Header -->
+        <header class="dash-header">
+            <div class="dash-header__left">
+                <img src="../frontend/assets/logo.png" alt="La Areperia" class="dash-header__logo">
+                <div>
+                    <h1 class="dash-header__title">Dashboard de Calificaciones</h1>
+                    <p class="dash-header__subtitle">Metricas de Servicio</p>
+                </div>
+            </div>
+            <div class="dash-header__right">
+                <div class="date-filter">
+                    <label for="date-from">Desde:</label>
+                    <input type="date" id="date-from">
+                    <label for="date-to">Hasta:</label>
+                    <input type="date" id="date-to">
+                    <button id="btn-apply-filter" class="btn btn--primary">Aplicar</button>
+                    <button id="btn-clear-filter" class="btn btn--outline">Limpiar</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Loading -->
+        <div id="dash-loading" class="dash-loading">
+            <div class="spinner"></div>
+            <p>Cargando datos...</p>
+        </div>
+
+        <!-- Error -->
+        <div id="dash-error" class="dash-error hidden">
+            <p id="dash-error-msg">Error al cargar datos</p>
+            <button id="btn-retry" class="btn btn--primary">Reintentar</button>
+        </div>
+
+        <!-- Contenido principal -->
+        <main id="dash-content" class="dash-content hidden">
+
+            <!-- Tarjetas resumen -->
+            <section class="card-row">
+                <div class="summary-card">
+                    <div class="summary-card__icon-wrap">
+                        <span class="summary-card__icon">&#128202;</span>
+                    </div>
+                    <div class="summary-card__body">
+                        <p class="summary-card__value" id="card-total">0</p>
+                        <p class="summary-card__label">Total Calificaciones</p>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-card__icon-wrap">
+                        <span class="summary-card__icon">&#11088;</span>
+                    </div>
+                    <div class="summary-card__body">
+                        <p class="summary-card__value" id="card-average">0.00</p>
+                        <p class="summary-card__label">Promedio General</p>
+                    </div>
+                </div>
+                <div class="summary-card summary-card--success">
+                    <div class="summary-card__icon-wrap">
+                        <span class="summary-card__icon">&#128077;</span>
+                    </div>
+                    <div class="summary-card__body">
+                        <p class="summary-card__value" id="card-best-sede">-</p>
+                        <p class="summary-card__label">Mejor Sede</p>
+                    </div>
+                </div>
+                <div class="summary-card summary-card--danger">
+                    <div class="summary-card__icon-wrap">
+                        <span class="summary-card__icon">&#128078;</span>
+                    </div>
+                    <div class="summary-card__body">
+                        <p class="summary-card__value" id="card-worst-sede">-</p>
+                        <p class="summary-card__label">Sede a Mejorar</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Resumen de Ayer -->
+            <section class="yesterday-section" id="yesterday-section">
+                <div class="yesterday-header">
+                    <h3 class="yesterday-header__title">Resumen de Ayer</h3>
+                    <span class="yesterday-header__date" id="yesterday-date"></span>
+                </div>
+                <div class="yesterday-cards">
+                    <div class="yesterday-card">
+                        <p class="yesterday-card__value" id="y-total">0</p>
+                        <p class="yesterday-card__label">Calificaciones</p>
+                    </div>
+                    <div class="yesterday-card yesterday-card--success">
+                        <p class="yesterday-card__value" id="y-bueno">0</p>
+                        <p class="yesterday-card__label">Bueno</p>
+                    </div>
+                    <div class="yesterday-card yesterday-card--warning">
+                        <p class="yesterday-card__value" id="y-regular">0</p>
+                        <p class="yesterday-card__label">Regular</p>
+                    </div>
+                    <div class="yesterday-card yesterday-card--danger">
+                        <p class="yesterday-card__value" id="y-malo">0</p>
+                        <p class="yesterday-card__label">Malo</p>
+                    </div>
+                    <div class="yesterday-card">
+                        <p class="yesterday-card__value" id="y-average">-</p>
+                        <p class="yesterday-card__label">Promedio</p>
+                    </div>
+                    <div class="yesterday-card">
+                        <div class="yesterday-bar" id="y-bar">
+                            <div class="yesterday-bar__segment yesterday-bar__segment--bueno" id="y-bar-bueno"></div>
+                            <div class="yesterday-bar__segment yesterday-bar__segment--regular" id="y-bar-regular"></div>
+                            <div class="yesterday-bar__segment yesterday-bar__segment--malo" id="y-bar-malo"></div>
+                        </div>
+                        <p class="yesterday-card__label">Distribucion</p>
+                    </div>
+                </div>
+                <div class="yesterday-sedes" id="yesterday-sedes"></div>
+            </section>
+
+            <!-- Graficos: Distribucion + Ranking -->
+            <section class="chart-row">
+                <div class="chart-panel">
+                    <h3 class="chart-panel__title">Distribucion de Calificaciones</h3>
+                    <div class="chart-container chart-container--square">
+                        <canvas id="chart-distribution"></canvas>
+                    </div>
+                </div>
+                <div class="chart-panel">
+                    <h3 class="chart-panel__title">Ranking por Sede</h3>
+                    <div class="chart-container">
+                        <canvas id="chart-sedes"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Grafico: Tendencia temporal -->
+            <section class="chart-row chart-row--full">
+                <div class="chart-panel chart-panel--wide">
+                    <div class="chart-panel__header">
+                        <h3 class="chart-panel__title">Tendencia Temporal</h3>
+                        <div class="trend-toggle">
+                            <button class="btn btn--sm btn--active" data-period="day">Diario</button>
+                            <button class="btn btn--sm" data-period="week">Semanal</button>
+                            <button class="btn btn--sm" data-period="month">Mensual</button>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-container--wide">
+                        <canvas id="chart-trend"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tabla: Detalle por sede -->
+            <section class="table-section">
+                <h3 class="table-section__title">Detalle por Sede</h3>
+                <div class="table-wrapper">
+                    <table class="data-table" id="table-sedes">
+                        <thead>
+                            <tr>
+                                <th>Sede</th>
+                                <th>Total</th>
+                                <th>Bueno</th>
+                                <th>Regular</th>
+                                <th>Malo</th>
+                                <th>Promedio</th>
+                                <th>Distribucion</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-sedes-body"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Tabla: Comentarios recientes -->
+            <section class="table-section">
+                <div class="table-section__header">
+                    <h3 class="table-section__title">Comentarios Recientes</h3>
+                    <select id="filter-sede-comments" class="select-filter">
+                        <option value="">Todas las sedes</option>
+                    </select>
+                </div>
+                <div class="table-wrapper">
+                    <table class="data-table" id="table-comments">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Sede</th>
+                                <th>Factura</th>
+                                <th>Calificacion</th>
+                                <th>Comentario</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-comments-body"></tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="comments-pagination"></div>
+            </section>
+
+            <!-- Exportar -->
+            <section class="export-section">
+                <button id="btn-export-csv" class="btn btn--primary btn--lg">
+                    &#128190; Exportar a CSV
+                </button>
+                <span class="export-hint" id="export-hint">
+                    Se exportaran los datos del rango de fechas seleccionado
+                </span>
+            </section>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="dash-footer">
+            <p>Sistema de Calificaciones - La Areperia</p>
+            <p>Desarrollado por <strong>Bast Automation SAS</strong> &amp; <strong>Blast Ideas SAS</strong></p>
+        </footer>
+    </div>
+
+    <script src="../frontend/config.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>
