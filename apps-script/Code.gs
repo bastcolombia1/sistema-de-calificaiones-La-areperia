@@ -781,47 +781,40 @@ function testGetConfig() {
 function initializeSheets() {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
 
-  // Configurar hoja de Configuracion
+  // Configurar hoja de Configuracion (solo si no existe, para no borrar datos reales)
   let configSheet = ss.getSheetByName(SHEET_CONFIG);
   if (!configSheet) {
     configSheet = ss.insertSheet(SHEET_CONFIG);
+    configSheet.appendRow([
+      'codigo_pv',
+      'nombre_pv',
+      'nombre_marca',
+      'logo_url',
+      'color_primario',
+      'color_secundario',
+      'prefijo_factura',
+      'validar_duplicados',
+      'activo'
+    ]);
+
+    // Datos de ejemplo
+    configSheet.appendRow(['PV001', 'Sede Centro', 'La Arepería', '', '#c8102e', '#f7e123', 'FENO', 'BLOQUEAR', true]);
+    configSheet.appendRow(['PV002', 'Sede Norte', 'La Arepería', '', '#c8102e', '#f7e123', 'FENO', 'BLOQUEAR', true]);
   }
 
-  // Limpiar y agregar headers
-  configSheet.clear();
-  configSheet.appendRow([
-    'codigo_pv',
-    'nombre_pv',
-    'nombre_marca',
-    'logo_url',
-    'color_primario',
-    'color_secundario',
-    'prefijo_factura',
-    'activo'
-  ]);
-
-  // Agregar datos de ejemplo
-  configSheet.appendRow(['PV001', 'Sede Centro', 'La Arepería', '', '#c8102e', '#f7e123', 'FENO', true]);
-  configSheet.appendRow(['PV002', 'Sede Norte', 'La Arepería', '', '#c8102e', '#f7e123', 'FENO', true]);
-  configSheet.appendRow(['PV003', 'Sede Sur', 'La Arepería', '', '#c8102e', '#f7e123', 'FENO', true]);
-  configSheet.appendRow(['PV004', 'Sede Este', 'La Arepería', '', '#c8102e', '#f7e123', 'FENO', true]);
-  configSheet.appendRow(['PV005', 'Sede Oeste', 'La Arepería', '', '#c8102e', '#f7e123', 'FENO', true]);
-
-  // Configurar hoja de Calificaciones
+  // Configurar hoja de Calificaciones (solo si no existe, para no borrar datos reales)
   let ratingsSheet = ss.getSheetByName(SHEET_RATINGS);
   if (!ratingsSheet) {
     ratingsSheet = ss.insertSheet(SHEET_RATINGS);
+    ratingsSheet.appendRow([
+      'timestamp',
+      'codigo_pv',
+      'nombre_pv',
+      'numero_factura',
+      'calificacion',
+      'comentario'
+    ]);
   }
-
-  ratingsSheet.clear();
-  ratingsSheet.appendRow([
-    'timestamp',
-    'codigo_pv',
-    'nombre_pv',
-    'numero_factura',
-    'calificacion',
-    'comentario'
-  ]);
 
   // Configurar hoja de ConfigAlertas (solo si no existe, para no borrar config existente)
   let alertsSheet = ss.getSheetByName(SHEET_ALERTS);
