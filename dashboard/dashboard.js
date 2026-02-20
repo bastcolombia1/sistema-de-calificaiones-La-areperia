@@ -79,25 +79,41 @@
     };
 
     // ========================================
-    // API con JSONP fallback
+    // API con JSONP (compatible Safari/iOS)
     // ========================================
-    function fetchWithCallback(url) {
+    function fetchWithCallback(url, timeoutMs) {
+        var timeout = timeoutMs || 15000;
         return new Promise(function(resolve, reject) {
             var callbackName = 'dashboard_cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+            var timer = null;
+            var done = false;
 
-            window[callbackName] = function(data) {
+            function cleanup() {
+                done = true;
+                clearTimeout(timer);
                 delete window[callbackName];
                 if (script.parentNode) document.body.removeChild(script);
+            }
+
+            window[callbackName] = function(data) {
+                if (done) return;
+                cleanup();
                 resolve(data);
             };
 
             var script = document.createElement('script');
             script.src = url + '&callback=' + callbackName;
             script.onerror = function() {
-                delete window[callbackName];
-                if (script.parentNode) document.body.removeChild(script);
+                if (done) return;
+                cleanup();
                 reject(new Error('Error de conexion'));
             };
+
+            timer = setTimeout(function() {
+                if (done) return;
+                cleanup();
+                reject(new Error('Timeout'));
+            }, timeout);
 
             document.body.appendChild(script);
         });
@@ -106,20 +122,23 @@
     async function fetchDashboardData() {
         var url = CONFIG.API_URL + '?action=getDashboardData';
 
+        // JSONP primero: mas compatible con Safari/iOS + Google Apps Script redirects
         try {
-            var response = await fetch(url, { method: 'GET', redirect: 'follow' });
-            var data = await response.json();
+            var data = await fetchWithCallback(url);
             if (!data.success) throw new Error(data.error || 'Error desconocido');
             return data;
+        } catch (jsonpError) {
+            console.warn('JSONP failed, trying fetch:', jsonpError);
+        }
+
+        // Fallback a fetch
+        try {
+            var response = await fetch(url, { method: 'GET', redirect: 'follow' });
+            var data2 = await response.json();
+            if (!data2.success) throw new Error(data2.error || 'Error desconocido');
+            return data2;
         } catch (fetchError) {
-            console.warn('Fetch failed, trying JSONP:', fetchError);
-            try {
-                var data2 = await fetchWithCallback(url);
-                if (!data2.success) throw new Error(data2.error || 'Error desconocido');
-                return data2;
-            } catch (jsonpError) {
-                throw new Error('No se pudo conectar con el servidor');
-            }
+            throw new Error('No se pudo conectar con el servidor');
         }
     }
 

@@ -136,27 +136,39 @@
     // API con soporte CORS para Google Apps Script
     // ========================================
 
-    function fetchWithCallback(url) {
+    function fetchWithCallback(url, timeoutMs) {
+        const timeout = timeoutMs || 15000;
         return new Promise((resolve, reject) => {
-            // Crear nombre único para callback
-            const callbackName = 'callback_' + Date.now();
+            const callbackName = 'callback_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+            let timer = null;
+            let done = false;
 
-            // Crear función callback global
-            window[callbackName] = function(data) {
-                // Limpiar
+            function cleanup() {
+                done = true;
+                clearTimeout(timer);
                 delete window[callbackName];
-                document.body.removeChild(script);
+                if (script.parentNode) document.body.removeChild(script);
+            }
+
+            window[callbackName] = function(data) {
+                if (done) return;
+                cleanup();
                 resolve(data);
             };
 
-            // Crear script tag
             const script = document.createElement('script');
             script.src = url + '&callback=' + callbackName;
             script.onerror = function() {
-                delete window[callbackName];
-                document.body.removeChild(script);
+                if (done) return;
+                cleanup();
                 reject(new Error('Error de conexión'));
             };
+
+            timer = setTimeout(() => {
+                if (done) return;
+                cleanup();
+                reject(new Error('Timeout'));
+            }, timeout);
 
             document.body.appendChild(script);
         });
@@ -166,31 +178,26 @@
         const url = `${CONFIG.API_URL}?action=getConfig&codigo_pv=${codigoPv}`;
         log('Fetching config from:', url);
 
+        // JSONP primero: mas compatible con Safari/iOS + Google Apps Script redirects
         try {
-            // Intentar con fetch normal primero (funciona si hay CORS habilitado)
-            const response = await fetch(url, {
-                method: 'GET',
-                redirect: 'follow'
-            });
-            const data = await response.json();
+            const data = await fetchWithCallback(url);
+            if (!data.success) {
+                throw new Error(data.error || 'Error desconocido');
+            }
+            return data.config;
+        } catch (jsonpError) {
+            log('JSONP failed, trying fetch:', jsonpError);
+        }
 
+        try {
+            const response = await fetch(url, { method: 'GET', redirect: 'follow' });
+            const data = await response.json();
             if (!data.success) {
                 throw new Error(data.error || 'Error desconocido');
             }
             return data.config;
         } catch (fetchError) {
-            log('Fetch failed, trying JSONP:', fetchError);
-
-            // Fallback a JSONP
-            try {
-                const data = await fetchWithCallback(url);
-                if (!data.success) {
-                    throw new Error(data.error || 'Error desconocido');
-                }
-                return data.config;
-            } catch (jsonpError) {
-                throw new Error('No se pudo conectar con el servidor');
-            }
+            throw new Error('No se pudo conectar con el servidor');
         }
     }
 
@@ -199,28 +206,24 @@
         log('Fetching sedes from:', url);
 
         try {
-            const response = await fetch(url, {
-                method: 'GET',
-                redirect: 'follow'
-            });
-            const data = await response.json();
+            const data = await fetchWithCallback(url);
+            if (!data.success) {
+                throw new Error(data.error || 'Error desconocido');
+            }
+            return data.sedes;
+        } catch (jsonpError) {
+            log('JSONP failed, trying fetch:', jsonpError);
+        }
 
+        try {
+            const response = await fetch(url, { method: 'GET', redirect: 'follow' });
+            const data = await response.json();
             if (!data.success) {
                 throw new Error(data.error || 'Error desconocido');
             }
             return data.sedes;
         } catch (fetchError) {
-            log('Fetch failed, trying JSONP:', fetchError);
-
-            try {
-                const data = await fetchWithCallback(url);
-                if (!data.success) {
-                    throw new Error(data.error || 'Error desconocido');
-                }
-                return data.sedes;
-            } catch (jsonpError) {
-                throw new Error('No se pudo conectar con el servidor');
-            }
+            throw new Error('No se pudo conectar con el servidor');
         }
     }
 
@@ -229,29 +232,25 @@
         log('Checking invoice duplicate:', url);
 
         try {
-            const response = await fetch(url, {
-                method: 'GET',
-                redirect: 'follow'
-            });
+            const data = await fetchWithCallback(url);
+            return data;
+        } catch (jsonpError) {
+            log('JSONP failed, trying fetch:', jsonpError);
+        }
+
+        try {
+            const response = await fetch(url, { method: 'GET', redirect: 'follow' });
             const data = await response.json();
             return data;
         } catch (fetchError) {
-            log('Fetch failed, trying JSONP:', fetchError);
-
-            try {
-                const data = await fetchWithCallback(url);
-                return data;
-            } catch (jsonpError) {
-                // Si falla la verificación, permitir continuar
-                return { success: true, exists: false };
-            }
+            // Si falla la verificación, permitir continuar
+            return { success: true, exists: false };
         }
     }
 
     async function submitRating(ratingData) {
         log('Submitting rating:', ratingData);
 
-        // Construir URL con parámetros para GET (más compatible con CORS)
         const params = new URLSearchParams({
             action: 'saveRating',
             codigo_pv: ratingData.codigo_pv,
@@ -263,26 +262,21 @@
         const url = `${CONFIG.API_URL}?${params.toString()}`;
 
         try {
-            const response = await fetch(url, {
-                method: 'GET',
-                redirect: 'follow'
-            });
-            const data = await response.json();
-
-            if (!data.success) {
-                throw new Error(data.error || 'Error al guardar');
-            }
-            return data;
-        } catch (fetchError) {
-            log('Fetch POST failed, trying JSONP:', fetchError);
-
-            // Fallback a JSONP
             const data = await fetchWithCallback(url);
             if (!data.success) {
                 throw new Error(data.error || 'Error al guardar');
             }
             return data;
+        } catch (jsonpError) {
+            log('JSONP failed, trying fetch:', jsonpError);
         }
+
+        const response = await fetch(url, { method: 'GET', redirect: 'follow' });
+        const data = await response.json();
+        if (!data.success) {
+            throw new Error(data.error || 'Error al guardar');
+        }
+        return data;
     }
 
     // ========================================
