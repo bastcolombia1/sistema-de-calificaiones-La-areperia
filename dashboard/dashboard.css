@@ -107,6 +107,72 @@ body::before {
     color: var(--dash-text-light);
 }
 
+/* Auto-refresh bar */
+.refresh-bar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--dash-border);
+    margin-top: 4px;
+}
+
+.refresh-bar__status {
+    font-size: 0.8rem;
+    color: var(--dash-text-muted);
+}
+
+.refresh-bar__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border: 1px solid var(--dash-border);
+    border-radius: 14px;
+    background: var(--dash-card-bg);
+    color: var(--dash-text-muted);
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.refresh-bar__toggle.active {
+    border-color: var(--dash-success);
+    color: var(--dash-success);
+    background: #f0faf3;
+}
+
+.refresh-bar__toggle:hover {
+    border-color: var(--dash-success);
+}
+
+.refresh-bar__icon {
+    font-size: 1rem;
+    line-height: 1;
+    display: inline-block;
+    transition: transform 0.3s;
+}
+
+.refresh-bar__toggle.active .refresh-bar__icon {
+    animation: spin-slow 2s linear infinite;
+}
+
+@keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes refresh-flash {
+    0% { color: var(--dash-success); }
+    100% { color: inherit; }
+}
+
+.refresh-flash {
+    animation: refresh-flash 1s ease-out;
+}
+
 .date-filter {
     display: flex;
     align-items: center;

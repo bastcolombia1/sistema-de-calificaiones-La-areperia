@@ -23,7 +23,10 @@
             sedes: null,
             trend: null,
             hourly: null
-        }
+        },
+        refreshTimer: null,
+        refreshInterval: 60000,
+        autoRefresh: true
     };
 
     // ========================================
@@ -88,7 +91,11 @@
 
         // Hourly
         chartHourly: document.getElementById('chart-hourly'),
-        hourlyAlerts: document.getElementById('hourly-alerts')
+        hourlyAlerts: document.getElementById('hourly-alerts'),
+
+        // Auto-refresh
+        lastUpdated: document.getElementById('last-updated'),
+        refreshToggle: document.getElementById('refresh-toggle')
     };
 
     // ========================================
@@ -821,6 +828,7 @@
     }
 
     function populateSedeFilter() {
+        var currentValue = el.filterSedeComments.value || '';
         el.filterSedeComments.innerHTML = '<option value="">Todas las sedes</option>';
         for (var i = 0; i < state.rawSedes.length; i++) {
             var option = document.createElement('option');
@@ -828,6 +836,7 @@
             option.textContent = state.rawSedes[i].nombre_pv;
             el.filterSedeComments.appendChild(option);
         }
+        el.filterSedeComments.value = currentValue;
     }
 
     // ========================================
@@ -997,7 +1006,7 @@
     // ========================================
     // Render maestro
     // ========================================
-    function renderAll() {
+    function renderAll(preserveState) {
         renderSummaryCards();
         renderToday();
         renderYesterday();
@@ -1006,7 +1015,7 @@
         renderTrendChart();
         renderHourlyChart();
         renderSedesTable();
-        state.commentPage = 1;
+        if (!preserveState) state.commentPage = 1;
         renderCommentsTable();
     }
 
@@ -1062,11 +1071,33 @@
 
         // Retry
         el.btnRetry.addEventListener('click', loadData);
+
+        // Auto-refresh toggle
+        if (el.refreshToggle) {
+            el.refreshToggle.addEventListener('click', function() {
+                if (state.autoRefresh) {
+                    stopAutoRefresh();
+                } else {
+                    startAutoRefresh();
+                }
+            });
+        }
     }
 
     // ========================================
     // Inicializacion
     // ========================================
+    function updateLastUpdated() {
+        if (!el.lastUpdated) return;
+        var now = new Date();
+        var h = String(now.getHours()).padStart(2, '0');
+        var m = String(now.getMinutes()).padStart(2, '0');
+        var s = String(now.getSeconds()).padStart(2, '0');
+        el.lastUpdated.textContent = h + ':' + m + ':' + s;
+        el.lastUpdated.classList.add('refresh-flash');
+        setTimeout(function() { el.lastUpdated.classList.remove('refresh-flash'); }, 1000);
+    }
+
     async function loadData() {
         showLoading();
 
@@ -1089,6 +1120,7 @@
 
             populateSedeFilter();
             renderAll();
+            updateLastUpdated();
             showContent();
 
         } catch (error) {
@@ -1097,9 +1129,53 @@
         }
     }
 
+    async function refreshData() {
+        try {
+            var data = await fetchDashboardData();
+
+            state.rawRatings = data.ratings.map(function(r) {
+                return {
+                    timestamp: r.timestamp,
+                    codigo_pv: r.codigo_pv,
+                    nombre_pv: r.nombre_pv,
+                    numero_factura: r.numero_factura,
+                    calificacion: parseInt(r.calificacion) || 0,
+                    comentario: r.comentario || ''
+                };
+            });
+            state.rawSedes = data.sedes;
+
+            applyDateFilter();
+            populateSedeFilter();
+            renderAll(true);
+            updateLastUpdated();
+
+        } catch (error) {
+            console.warn('Auto-refresh failed:', error.message);
+        }
+    }
+
+    function startAutoRefresh() {
+        stopAutoRefresh();
+        state.autoRefresh = true;
+        state.refreshTimer = setInterval(refreshData, state.refreshInterval);
+        if (el.refreshToggle) el.refreshToggle.classList.add('active');
+    }
+
+    function stopAutoRefresh() {
+        state.autoRefresh = false;
+        if (state.refreshTimer) {
+            clearInterval(state.refreshTimer);
+            state.refreshTimer = null;
+        }
+        if (el.refreshToggle) el.refreshToggle.classList.remove('active');
+    }
+
     function init() {
         bindEvents();
-        loadData();
+        loadData().then(function() {
+            startAutoRefresh();
+        });
     }
 
     if (document.readyState === 'loading') {
